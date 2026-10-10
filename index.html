@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dil Se... For You ♡</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>">
+  
+  <!-- Fonts: Patrick Hand (Clean handwriting) + Playfair Display (Aesthetic serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-cream: #fff0f3;
+      --paper-color: #fffdfb;
+      --pen-ink: #2b2029;
+      --pen-soft: #695260;
+      --rose-primary: #e05375;
+      --rose-accent: #ff758f;
+      --rose-soft: #ffb3c1;
+      --rose-pale: #ffd6e0;
+      --shadow-paper: 0 14px 40px rgba(224, 83, 117, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 12%, #ffe8ed 0%, #fff0f3 55%, #ffdbe3 100%);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--pen-ink);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Soft Glow */
+    .ambient-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ambient-glow::before {
+      content: '';
+      position: absolute;
+      top: -12%;
+      left: 12%;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: rgba(255, 182, 193, 0.5);
+      filter: blur(65px);
+    }
+    .ambient-glow::after {
+      content: '';
+      position: absolute;
+      bottom: 8%;
+      right: 5%;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(255, 214, 224, 0.55);
+      filter: blur(55px);
+    }
+
+    /* Tap Heart Ripple */
+    .tap-heart {
+      position: fixed;
+      font-size: 20px;
+      pointer-events: none;
+      z-index: 999;
+      transform: translate(-50%, -50%) scale(0.6);
+      animation: tapRise 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes tapRise {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -90px) scale(1.4) rotate(14deg); }
+    }
+
+    /* Mobile Container */
+    .app-viewport {
+      width: 100%;
+      max-width: 440px;
+      padding: 34px 18px 80px 18px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ================================================= */
+    /* 1. REALISTIC 3D ENVELOPE STAGE                    */
+    /* ================================================= */
+    #envelopeStage {
+      width: 100%;
+      min-height: 84vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .stage-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 29px;
+      color: #3d2a2d;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .stage-sub {
+      font-size: 14.5px;
+      color: #7d6569;
+      margin-bottom: 28px;
+    }
+
+    /* Vintage 3D Envelope Container */
+    .envelope-3d-box {
+      width: 320px;
+      height: 215px;
+      position: relative;
+      perspective: 1200px;
+      cursor: pointer;
+    }
+
+    .envelope-base {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f7ede0 0%, #ecd9bf 50%, #dfc6a6 100%);
+      box-shadow: 0 18px 45px rgba(110, 75, 50, 0.18), 0 4px 14px rgba(110, 75, 50, 0.1);
+      border: 1px solid #d4b897;
+      overflow: visible;
+    }
+
+    /* Inside Letter Peek (Hidden inside sealed envelope until opened) */
+    .letter-preview-sheet {
+      position: absolute;
+      top: 14px;
+      left: 15px;
+      width: 290px;
+      height: 185px;
+      background: #fffdf9;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(90, 60, 40, 0.1);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border: 1px solid #ecd6be;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(30px) scale(0.92);
+      pointer-events: none;
+      transition: transform 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.45s ease 0.15s, visibility 0.45s ease, box-shadow 0.85s ease;
+    }
+
+    .preview-header {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 20px;
+      color: #9e1b32;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .preview-line {
+      width: 80%;
+      height: 5px;
+      background: #f4e1cf;
+      border-radius: 4px;
+      margin: 4px 0;
+    }
+
+    /* Vintage Postage Stamp (Top Right) */
+    .vintage-stamp {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      width: 52px;
+      height: 62px;
+      background: #faf4e8;
+      border-radius: 2px;
+      box-shadow: 0 2px 7px rgba(70, 45, 30, 0.15);
+      border: 2px dashed #bfa181;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      pointer-events: none;
+      padding: 3px;
+    }
+
+    .stamp-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #c9ad8e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fbf7f0;
+    }
+
+    .stamp-art {
+      font-size: 20px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+    }
+
+    .stamp-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 9px;
+      color: #8c6a51;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Minimalist Wavy Postal Cancellation Lines */
+    .vintage-postmark {
+      position: absolute;
+      top: 22px;
+      right: 8px;
+      width: 86px;
+      height: 48px;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.55;
+      transform: rotate(-10deg);
+    }
+
+    .vintage-postmark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Envelope Pocket Layer */
+    .envelope-pocket-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .envelope-pocket-layer svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 -3px 8px rgba(80, 50, 30, 0.08));
+    }
+
+    /* Top Triangular Flap (3D) */
+    .envelope-top-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 122px;
+      transform-origin: top center;
+      transform-style: preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 5;
+    }
+
+    .envelope-top-flap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 4px 10px rgba(90, 60, 40, 0.16));
+    }
+
+    /* Classic Crimson Red 3D Wax Seal */
+    .wax-seal-badge {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 54px;
+      height: 54px;
+      background: radial-gradient(circle at 38% 34%, #c72844 0%, #9e1b32 55%, #730e20 100%);
+      border-radius: 50%;
+      box-shadow: 
+        0 6px 18px rgba(115, 14, 32, 0.45),
+        inset 0 2px 4px rgba(255, 255, 255, 0.35),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.45),
+        0 0 0 2px rgba(160, 30, 50, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      color: #fff2f4;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.35s ease;
+      z-index: 6;
+      animation: waxPulse 2.8s infinite ease-in-out;
+    }
+
+    .wax-seal-badge:hover {
+      transform: translateX(-50%) scale(1.08);
+      box-shadow: 
+        0 8px 24px rgba(115, 14, 32, 0.55),
+        inset 0 2px 4px rgba(255, 255, 255, 0.45),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.45);
+    }
+
+    .wax-seal-badge:active {
+      transform: translateX(-50%) scale(0.96);
+    }
+
+    .wax-seal-inner {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(255, 215, 225, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes waxPulse {
+      0%, 100% {
+        box-shadow: 0 6px 18px rgba(115, 14, 32, 0.45), 0 0 0 0 rgba(199, 40, 68, 0.35);
+      }
+      50% {
+        box-shadow: 0 8px 22px rgba(115, 14, 32, 0.6), 0 0 0 8px rgba(199, 40, 68, 0);
+      }
+    }
+
+    /* Vintage Parchment Slide-to-Open Track */
+    .slider-area {
+      margin-top: 30px;
+      width: 310px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .slide-track {
+      width: 100%;
+      height: 52px;
+      background: #faf5ee;
+      border: 1.5px solid #d8bfa2;
+      border-radius: 35px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 3px;
+      box-shadow: 0 6px 18px rgba(110, 75, 50, 0.12);
+      touch-action: none;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .slide-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(235, 216, 191, 0.5) 0%, rgba(199, 40, 68, 0.25) 100%);
+      pointer-events: none;
+      border-radius: 35px;
+    }
+
+    .slide-text {
+      width: 100%;
+      text-align: center;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #8c6a51;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+      padding-left: 38px;
+    }
+
+    .slide-thumb {
+      width: 46px;
+      height: 46px;
+      background: radial-gradient(circle at 38% 34%, #c72844 0%, #9e1b32 60%, #730e20 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff2f4;
+      font-size: 19px;
+      box-shadow: 
+        0 4px 14px rgba(115, 14, 32, 0.4),
+        inset 0 2px 3px rgba(255, 255, 255, 0.35);
+      cursor: grab;
+      position: absolute;
+      left: 3px;
+      z-index: 5;
+      transition: transform 0.2s;
+    }
+
+    .slide-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.06);
+    }
+
+    /* Tap Hint Text */
+    .seal-tap-hint {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16.5px;
+      color: #8c6a51;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: hintFloat 2s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes hintFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* Opened States (Cinematic Natural Pacing) */
+    .envelope-3d-box.opened .envelope-top-flap {
+      transform: rotateX(180deg);
+      z-index: 1;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .envelope-3d-box.opened .wax-seal-badge {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.35);
+      pointer-events: none;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+
+    .envelope-3d-box.opened .letter-preview-sheet {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-135px) scale(1.02);
+      box-shadow: 0 30px 55px rgba(110, 75, 50, 0.28);
+      z-index: 4;
+      pointer-events: auto;
+      transition: transform 0.75s cubic-bezier(0.25, 1, 0.5, 1) 0.4s, opacity 0.4s ease 0.35s, box-shadow 0.75s ease 0.4s;
+    }
+
+    /* ================================================= */
+    /* 2. HANDWRITTEN LETTER STAGE                       */
+    /* ================================================= */
+    #letterStage {
+      display: none;
+      opacity: 0;
+      width: 100%;
+      transform: translateY(18px);
+      transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.3, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
+    }
+
+    #letterStage.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .paper-sheet {
+      position: relative;
+      background-color: var(--paper-color);
+      border-radius: 18px;
+      padding: 42px 22px 34px 22px;
+      box-shadow: var(--shadow-paper);
+      border: 1px solid #fae1e6;
+      margin-bottom: 30px;
+      transform-origin: top center;
+    }
+
+    #letterStage.visible .paper-sheet {
+      animation: physicalPaperUnfold 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes physicalPaperUnfold {
+      0% {
+        transform: scaleY(0.72) rotateX(15deg);
+        opacity: 0.5;
+        box-shadow: 0 5px 20px rgba(224, 83, 117, 0.08);
+      }
+      65% {
+        transform: scaleY(1.02) rotateX(-2deg);
+        opacity: 1;
+        box-shadow: 0 16px 42px rgba(224, 83, 117, 0.16);
+      }
+      100% {
+        transform: scaleY(1) rotateX(0deg);
+        opacity: 1;
+        box-shadow: var(--shadow-paper);
+      }
+    }
+
+    .washi-strip {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 86px;
+      height: 22px;
+      background: rgba(255, 182, 193, 0.65);
+      border-left: 2px dashed rgba(255, 255, 255, 0.7);
+      border-right: 2px dashed rgba(255, 255, 255, 0.7);
+      border-radius: 2px;
+    }
+
+    .letter-salutation {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 26px;
+      color: var(--rose-primary);
+      font-weight: 600;
+      margin-bottom: 18px;
+      border-bottom: 1.5px dashed var(--rose-soft);
+      padding-bottom: 8px;
+    }
+
+    /* Clean & Clear Handwritten Body */
+    .letter-body {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 20px;
+      color: var(--pen-ink);
+      line-height: 1.75;
+      letter-spacing: 0.3px;
+    }
+
+    .letter-body p {
+      margin-bottom: 18px;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+
+    .letter-closing {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 26px;
+      color: var(--rose-primary);
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 4px;
+    }
+
+    .letter-sign {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 21px;
+      color: var(--pen-soft);
+      line-height: 1.4;
+    }
+
+    .letter-sign span {
+      display: block;
+      font-size: 18px;
+      color: #947a89;
+      margin-top: 3px;
+    }
+
+    /* ================================================= */
+    /* 3. SURPRISE BUTTON SECTION                        */
+    /* ================================================= */
+    .surprise-box {
+      margin-top: 10px;
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 30px 20px;
+      text-align: center;
+      border: 1px solid #ffe5ec;
+      box-shadow: var(--shadow-paper);
+    }
+
+    .surprise-hint {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 19px;
+      color: var(--pen-soft);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .surprise-btn {
+      background: linear-gradient(135deg, #ff758f 0%, #e05375 100%);
+      color: #ffffff;
+      border: none;
+      padding: 16px 42px;
+      border-radius: 35px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(224, 83, 117, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+
+    .surprise-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* ================================================= */
+    /* 4. SURPRISE MULTI-GIF MODAL                       */
+    /* ================================================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(43, 32, 41, 0.55);
+      backdrop-filter: blur(7px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 18px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 26px;
+      padding: 24px 18px;
+      text-align: center;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(224, 83, 117, 0.28);
+      border: 2px solid #ffd6e0;
+      animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+    }
+
+    @keyframes modalPop {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Carousel Frame */
+    .gif-carousel {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      background: #fff0f3;
+      border: 1px solid #ffd6e0;
+      box-shadow: 0 6px 16px rgba(224, 83, 117, 0.12);
+    }
+
+    .gif-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+      pointer-events: none;
+    }
+
+    .gif-slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Navigation Arrows */
+    .carousel-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--rose-pale);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--rose-primary);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 5;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    .carousel-nav-btn:active {
+      background: #fff;
+    }
+    .carousel-prev { left: 8px; }
+    .carousel-next { right: 8px; }
+
+    /* Indicator Dots */
+    .gif-dots {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .gif-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ffd6e0;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .gif-dot.active {
+      width: 22px;
+      border-radius: 10px;
+      background: var(--rose-primary);
+    }
+
+    /* Message */
+    .surprise-text {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 21px;
+      color: var(--rose-primary);
+      line-height: 1.45;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .modal-btn {
+      background: linear-gradient(135deg, #ff758f 0%, #e05375 100%);
+      color: #ffffff;
+      border: none;
+      padding: 12px 34px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(224, 83, 117, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .modal-btn:active {
+      transform: scale(0.96);
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-btn-secondary {
+      background: transparent;
+      color: #947a89;
+      border: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 15px;
+      transition: color 0.2s;
+    }
+
+    .modal-btn-secondary:hover {
+      color: var(--rose-primary);
+    }
+
+    /* Image Frame for Surprise 2 */
+    .image-frame {
+      width: 100%;
+      height: 235px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      background: #fff0f3;
+      border: 1px solid #ffd6e0;
+      box-shadow: 0 6px 16px rgba(224, 83, 117, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Video Frame for Surprise 3 */
+    .video-frame {
+      width: 100%;
+      max-height: 380px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      background: #110d10;
+      border: 2px solid #ffd6e0;
+      box-shadow: 0 8px 22px rgba(224, 83, 117, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-frame video {
+      width: 100%;
+      max-height: 380px;
+      display: block;
+      object-fit: contain;
+      border-radius: 16px;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient light -->
+  <div class="ambient-glow"></div>
+
+  <div class="app-viewport">
+
+    <!-- 1. VINTAGE HANDMADE PARCHMENT ENVELOPE STAGE -->
+    <section id="envelopeStage">
+      <h1 class="stage-title">Letter for you ♡</h1>
+      <p class="stage-sub">A special heartfelt delivery...</p>
+
+      <div class="envelope-3d-box" id="envelopeBox">
+        <div class="envelope-base"></div>
+
+        <!-- Inside Parchment Letter Peek -->
+        <div class="letter-preview-sheet">
+          <div class="preview-header">Baby, there's something I want to say from my heart… ♡</div>
+          <div class="preview-line"></div>
+          <div class="preview-line" style="width: 60%;"></div>
+          <div class="preview-line" style="width: 75%;"></div>
+        </div>
+
+        <!-- Vintage Postage Stamp (Top-Right) -->
+        <div class="vintage-stamp">
+          <div class="stamp-inner">
+            <span class="stamp-art">🌸</span>
+            <span class="stamp-price">♡ 1st</span>
+          </div>
+        </div>
+
+        <!-- Minimalist Wavy Postal Cancellation Lines (No text slogans) -->
+        <div class="vintage-postmark">
+          <svg viewBox="0 0 86 48" fill="none" stroke="#4a3728" stroke-width="1.4" stroke-linecap="round">
+            <path d="M 4 12 Q 22 4, 40 12 T 76 12" />
+            <path d="M 4 24 Q 22 16, 40 24 T 76 24" />
+            <path d="M 4 36 Q 22 28, 40 36 T 76 36" />
+            <circle cx="58" cy="24" r="16" stroke="#4a3728" stroke-width="1.2" stroke-dasharray="2 2" fill="none" opacity="0.6"/>
+          </svg>
+        </div>
+
+        <!-- 3D Vintage Flap with Crimson Wax Seal -->
+        <div class="envelope-top-flap" id="envelopeFlap">
+          <svg viewBox="0 0 320 122" preserveAspectRatio="none">
+            <polygon points="0,0 320,0 160,122" fill="url(#craftFlapGrad)"/>
+            <defs>
+              <linearGradient id="craftFlapGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#eedfc9"/>
+                <stop offset="65%" stop-color="#dfcaa9"/>
+                <stop offset="100%" stop-color="#d4ba94"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <!-- Classic Crimson Red 3D Wax Seal Button -->
+          <div class="wax-seal-badge" id="waxSealBtn" role="button" aria-label="Open Letter" tabindex="0">
+            <div class="wax-seal-inner">♡</div>
+          </div>
+        </div>
+
+        <!-- Pocket Fold Layer (Solid Opaque Kraft Folds) -->
+        <div class="envelope-pocket-layer">
+          <svg viewBox="0 0 320 215" preserveAspectRatio="none">
+            <polygon points="0,0 0,215 160,115" fill="#e8d4b8"/>
+            <polygon points="320,0 320,215 160,115" fill="#dfc39e"/>
+            <polygon points="0,215 320,215 160,102" fill="url(#craftPocketGrad)"/>
+            <defs>
+              <linearGradient id="craftPocketGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ebd8bf"/>
+                <stop offset="100%" stop-color="#dfc4a4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Dual Interaction: Slide Track or Tap Wax Seal -->
+      <div class="slider-area">
+        <div class="slide-track" id="slideTrack">
+          <div class="slide-fill" id="slideFill"></div>
+          <span class="slide-text">Slide to open letter ➔</span>
+          <div class="slide-thumb" id="slideThumb">♡</div>
+        </div>
+      </div>
+
+      <!-- Romantic Hint -->
+      <p class="seal-tap-hint">or tap the wax seal to open 💌</p>
+    </section>
+
+    <!-- 2. HANDWRITTEN LETTER CONTENT -->
+    <main id="letterStage">
+
+      <article class="paper-sheet">
+        <div class="washi-strip"></div>
+
+        <div class="letter-salutation">
+          Baby, there's something I want to say from my heart… ♡
+        </div>
+
+        <div class="letter-body">
+          <p>Mujhe pata hai ki maine tumhe hurt kiya, aur mujhe iska genuinely sorry hai.</p>
+
+          <p>Tumhe apni galti ka pehle hi regret tha, tum us baat ko lekar already bura feel kar chuki thi. Phir bhi maine woh baat dobara keh di. Mujhe ab samajh aa raha hai ki meri baaton se tumhe kitna hurt hua hoga.</p>
+
+          <p>Tumhe pehle se hi jis baat ka regret tha, usi baat ko meri taraf se dobara sunna tumhare liye aur painful raha hoga. Mujhe tumhari feelings ka dhyaan rakhna chahiye tha. Main apni baat ko justify nahi karna chahta, kyunki maine jo kiya usse tum hurt hui, aur uski responsibility meri hai.</p>
+
+          <p>I'm sorry, baby. Sach mein. 🥺 Main nahi chahta ki tumhe kabhi aisa lage ki tumhari ek purani galti tumhari poori pehchaan ban gayi hai. Tum apni galti accept karke aage badhne ki deserving ho, aur mujhe bhi tumhare regret ko respect karna chahiye tha.</p>
+
+          <p>Mujhe apni baaton ka dhyaan rakhna hai, aur tumhe hurt karne par excuses dene ke bajaye apni responsibility leni hai.</p>
+
+          <p>Bas dil se chahta tha ki tum yeh jaano ki mujhe apni galti ka ehsaas hai, aur mujhe sach mein afsos hai ki meri wajah se tum hurt hui.</p>
+        </div>
+
+        <div class="letter-closing">
+          I love you, baby. ♡
+        </div>
+
+        <div class="letter-sign">
+          — tumhara bhondu
+          <span>(Yeh last time sorry baby hehe)</span>
+        </div>
+      </article>
+
+      <!-- 3. SURPRISE BUTTON -->
+      <div class="surprise-box">
+        <div class="surprise-hint">
+          "Ek chhota sa surprise tumhare liye..."
+        </div>
+        <button class="surprise-btn" id="surpriseBtn">
+          <span>Open Surprise</span> 🎁
+        </button>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- 4. SURPRISE 1 MODAL (GIFs) -->
+  <div class="modal-overlay" id="surpriseModal">
+    <div class="modal-card">
+      
+      <!-- GIF Carousel Frame with user's 3 GIFs -->
+      <div class="gif-carousel" id="gifCarousel">
+        <img class="gif-slide active" src="https://media.giphy.com/media/WXQgWsAOoRQG4eUT21/giphy.gif" alt="Cute Hug and Kisses 1">
+        <img class="gif-slide" src="https://media.giphy.com/media/EZU0P3QHXtnR1OMCfx/giphy.gif" alt="Cute Hug and Kisses 2">
+        <img class="gif-slide" src="https://media.giphy.com/media/IA4zVqU2ZjAGm8Cq4M/giphy.gif" alt="Cute Hug and Kisses 3">
+
+        <!-- Navigation Arrows -->
+        <button class="carousel-nav-btn carousel-prev" id="prevGifBtn" aria-label="Previous GIF">❮</button>
+        <button class="carousel-nav-btn carousel-next" id="nextGifBtn" aria-label="Next GIF">❯</button>
+      </div>
+
+      <!-- Carousel Indicator Dots -->
+      <div class="gif-dots" id="gifDots">
+        <span class="gif-dot active" data-index="0"></span>
+        <span class="gif-dot" data-index="1"></span>
+        <span class="gif-dot" data-index="2"></span>
+      </div>
+
+      <!-- Exact Message -->
+      <p class="surprise-text">
+        Meri pyri si baby ke liye bhut sari kisses and hug my kucupucu baby hehe
+      </p>
+
+      <div class="modal-actions">
+        <button class="modal-btn" id="nextToImageBtn">Ek Aur Surprise 🎁</button>
+        <button class="modal-btn-secondary" id="modalCloseBtn">Close ♡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. SURPRISE 2 MODAL: IMAGE CARD -->
+  <div class="modal-overlay" id="imageModal">
+    <div class="modal-card">
+      <div class="image-frame">
+        <img src="image.jpg" alt="Cute surprise image">
+      </div>
+
+      <p class="surprise-text">
+        hehe you like surprises 🤭
+      </p>
+
+      <div class="modal-actions">
+        <button class="modal-btn" id="nextToVideoBtn">Yay let's see surprise ✨</button>
+        <button class="modal-btn-secondary" id="imageCloseBtn">Close ♡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. SURPRISE 3 MODAL: VIDEO CARD (DUDUBUBU.mp4) -->
+  <div class="modal-overlay" id="videoModal">
+    <div class="modal-card">
+      <div class="video-frame">
+        <video id="dudububuVideo" src="DUDUBUBU.mp4" playsinline controls preload="auto"></video>
+      </div>
+
+      <p class="surprise-text">
+        For My Special Baby ♡
+      </p>
+
+      <div class="modal-actions">
+        <button class="modal-btn" id="videoCloseBtn">Aww Love You So Much ♡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Audio (Plays invisibly when envelope is opened, no UI buttons or elements added) -->
+  <audio id="bgMusic" src="Song.mp4" loop preload="auto" style="display:none;"></audio>
+
+  <script>
+    // Background Music (Preloaded and played automatically upon opening envelope)
+    const bgAudio = document.getElementById('bgMusic') || new Audio('Song.mp4');
+    bgAudio.loop = true;
+
+    // Screen Tap Hearts
+    const petals = ['💖', '🌸', '✨', '🤍', '🌷'];
+    document.addEventListener('pointerdown', (e) => {
+      if (e.target.id === 'slideThumb' || e.target.closest('#slideTrack') || e.target.closest('.carousel-nav-btn')) return;
+      const p = document.createElement('div');
+      p.className = 'tap-heart';
+      p.innerText = petals[Math.floor(Math.random() * petals.length)];
+      p.style.left = e.clientX + 'px';
+      p.style.top = e.clientY + 'px';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 850);
+    });
+
+    // ===================================================
+    // VINTAGE SLIDE-TO-OPEN & WAX SEAL DUAL INTERACTION
+    // ===================================================
+    const trackElem = document.getElementById('slideTrack');
+    const thumbElem = document.getElementById('slideThumb');
+    const fillElem = document.getElementById('slideFill');
+    const envelopeBox = document.getElementById('envelopeBox');
+    const envelopeStage = document.getElementById('envelopeStage');
+    const letterStage = document.getElementById('letterStage');
+    const waxSealBtn = document.getElementById('waxSealBtn');
+
+    let isOpened = false;
+    let isDragging = false;
+    let startX = 0;
+    let maxDist = 0;
+
+    function calculateMaxDist() {
+      if (!trackElem || !thumbElem) return;
+      maxDist = trackElem.clientWidth - thumbElem.clientWidth - 6;
+    }
+    window.addEventListener('resize', calculateMaxDist);
+    calculateMaxDist();
+
+    function openVintageEnvelope() {
+      if (isOpened) return;
+      isOpened = true;
+
+      // Complete slide fill & thumb position
+      if (thumbElem && maxDist) {
+        thumbElem.style.left = (maxDist + 3) + 'px';
+        thumbElem.innerText = '💖';
+        if (fillElem) fillElem.style.width = '100%';
+      }
+
+      // Silky cinematic audio fade-in (volume 0 -> 0.85 smoothly)
+      if (bgAudio.paused) {
+        bgAudio.volume = 0;
+        const playPromise = bgAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            let vol = 0;
+            const fadeInterval = setInterval(() => {
+              vol += 0.05;
+              if (vol >= 0.85) {
+                bgAudio.volume = 0.85;
+                clearInterval(fadeInterval);
+              } else {
+                bgAudio.volume = vol;
+              }
+            }, 80);
+          }).catch(() => {
+            const startAudio = () => {
+              bgAudio.volume = 0.85;
+              bgAudio.play().catch(() => {});
+              document.removeEventListener('pointerdown', startAudio);
+              document.removeEventListener('click', startAudio);
+            };
+            document.addEventListener('pointerdown', startAudio, { once: true });
+            document.addEventListener('click', startAudio, { once: true });
+          });
+        }
+      }
+
+      // Trigger 3D Flap Opening
+      envelopeBox.classList.add('opened');
+
+      // Cinematic natural unfold pacing (Zero confetti / sparkles)
+      // Phase 1 (0-600ms): Flap opens 3D
+      // Phase 2 (600-1200ms): Letter glides smoothly out of envelope pocket
+      // Phase 3 (1200ms+): Envelope dims and letter physically unfolds onto screen
+      setTimeout(() => {
+        envelopeStage.style.opacity = '0';
+        envelopeStage.style.transform = 'scale(0.96)';
+      }, 1100);
+
+      setTimeout(() => {
+        envelopeStage.style.display = 'none';
+        letterStage.classList.add('visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 1550);
+    }
+
+    // Slider Drag Listeners
+    function onDragStart(e) {
+      if (isOpened) return;
+      isDragging = true;
+      startX = e.clientX || (e.touches && e.touches[0].clientX);
+      thumbElem.setPointerCapture(e.pointerId);
+      thumbElem.style.transition = 'none';
+      fillElem.style.transition = 'none';
+
+      if (bgAudio.paused) {
+        bgAudio.load();
+      }
+    }
+
+    function onDragMove(e) {
+      if (!isDragging || isOpened) return;
+      const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+      let diff = currentX - startX;
+      if (diff < 0) diff = 0;
+      if (diff > maxDist) diff = maxDist;
+
+      thumbElem.style.left = (diff + 3) + 'px';
+      fillElem.style.width = ((diff / maxDist) * 100) + '%';
+
+      if (diff >= maxDist * 0.8) {
+        isDragging = false;
+        openVintageEnvelope();
+      }
+    }
+
+    function onDragEnd() {
+      if (!isDragging || isOpened) return;
+      isDragging = false;
+      thumbElem.style.transition = 'left 0.3s ease';
+      fillElem.style.transition = 'width 0.3s ease';
+      thumbElem.style.left = '3px';
+      fillElem.style.width = '0%';
+    }
+
+    if (thumbElem) {
+      thumbElem.addEventListener('pointerdown', onDragStart);
+      thumbElem.addEventListener('pointermove', onDragMove);
+      thumbElem.addEventListener('pointerup', onDragEnd);
+      thumbElem.addEventListener('pointercancel', onDragEnd);
+    }
+
+    if (waxSealBtn) {
+      waxSealBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openVintageEnvelope();
+      });
+    }
+
+    // Allow clicking anywhere on the vintage envelope to easily open
+    if (envelopeBox) {
+      envelopeBox.addEventListener('click', openVintageEnvelope);
+    }
+
+    // ===================================================
+    // MULTI-GIF CAROUSEL LOGIC
+    // ===================================================
+    const gifSlides = document.querySelectorAll('.gif-slide');
+    const gifDots = document.querySelectorAll('.gif-dot');
+    const prevGifBtn = document.getElementById('prevGifBtn');
+    const nextGifBtn = document.getElementById('nextGifBtn');
+    let currentGifIdx = 0;
+    let gifInterval = null;
+
+    function showGif(idx) {
+      if (idx < 0) idx = gifSlides.length - 1;
+      if (idx >= gifSlides.length) idx = 0;
+      currentGifIdx = idx;
+
+      gifSlides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === currentGifIdx);
+      });
+      gifDots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentGifIdx);
+      });
+    }
+
+    function startGifAutoSlide() {
+      clearInterval(gifInterval);
+      gifInterval = setInterval(() => {
+        showGif(currentGifIdx + 1);
+      }, 3000);
+    }
+
+    prevGifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showGif(currentGifIdx - 1);
+      startGifAutoSlide();
+    });
+
+    nextGifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showGif(currentGifIdx + 1);
+      startGifAutoSlide();
+    });
+
+    gifDots.forEach(dot => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const index = parseInt(dot.getAttribute('data-index'));
+        showGif(index);
+        startGifAutoSlide();
+      });
+    });
+
+    // ===================================================
+    // MULTI-STEP CHAIN SURPRISE INTERACTION
+    // ===================================================
+    const surpriseBtn = document.getElementById('surpriseBtn');
+    const surpriseModal = document.getElementById('surpriseModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    const nextToImageBtn = document.getElementById('nextToImageBtn');
+    const imageModal = document.getElementById('imageModal');
+    const imageCloseBtn = document.getElementById('imageCloseBtn');
+
+    const nextToVideoBtn = document.getElementById('nextToVideoBtn');
+    const videoModal = document.getElementById('videoModal');
+    const videoCloseBtn = document.getElementById('videoCloseBtn');
+    const dudububuVideo = document.getElementById('dudububuVideo');
+
+    // 1. Open Surprise 1 (GIFs)
+    surpriseBtn.addEventListener('click', () => {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#ff758f', '#ffccd5', '#ff4d6d', '#ffffff', '#e05375']
+      });
+
+      showGif(0);
+      startGifAutoSlide();
+
+      setTimeout(() => {
+        surpriseModal.classList.add('active');
+      }, 350);
+    });
+
+    modalCloseBtn.addEventListener('click', () => {
+      surpriseModal.classList.remove('active');
+      clearInterval(gifInterval);
+    });
+
+    // 2. Surprise 1 -> Surprise 2 (Image Card)
+    nextToImageBtn.addEventListener('click', () => {
+      clearInterval(gifInterval);
+      surpriseModal.classList.remove('active');
+
+      confetti({
+        particleCount: 90,
+        spread: 75,
+        origin: { y: 0.5 },
+        colors: ['#ff758f', '#ffb3c1', '#ffd166', '#ffffff']
+      });
+
+      setTimeout(() => {
+        imageModal.classList.add('active');
+      }, 200);
+    });
+
+    imageCloseBtn.addEventListener('click', () => {
+      imageModal.classList.remove('active');
+    });
+
+    // 3. Surprise 2 -> Surprise 3 (Video Card: DUDUBUBU.mp4)
+    nextToVideoBtn.addEventListener('click', () => {
+      imageModal.classList.remove('active');
+
+      confetti({
+        particleCount: 110,
+        spread: 85,
+        origin: { y: 0.5 },
+        colors: ['#ff758f', '#ff4d6d', '#ffd166', '#a11d33', '#ffffff']
+      });
+
+      // Pause background Song.mp4 before playing video
+      if (!bgAudio.paused) {
+        bgAudio.pause();
+      }
+
+      setTimeout(() => {
+        videoModal.classList.add('active');
+        dudububuVideo.currentTime = 0;
+        dudububuVideo.play().catch(e => console.log('Video play error:', e));
+      }, 200);
+    });
+
+    // 4. Close Video Card and Resume Background Music
+    function closeVideoAndResumeSong() {
+      videoModal.classList.remove('active');
+      dudububuVideo.pause();
+
+      // Resume background music automatically
+      if (bgAudio.paused) {
+        bgAudio.play().catch(e => console.log('Audio resume error:', e));
+      }
+    }
+
+    videoCloseBtn.addEventListener('click', closeVideoAndResumeSong);
+
+    // If video ends, resume background music automatically
+    dudububuVideo.addEventListener('ended', () => {
+      if (bgAudio.paused) {
+        bgAudio.play().catch(e => console.log('Audio resume error:', e));
+      }
+    });
+  </script>
+</body>
+</html>
